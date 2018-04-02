@@ -35,7 +35,7 @@ with sr.AudioFile(source_audio_file) as source:
 print(str(source_audio_file))
 
 try:
-    print("Sphinx thinks you said " + r.recognize_sphinx(audio))
+    print("Sphinx thinks you said:  '" + r.recognize_sphinx(audio) + "'")
 except sr.UnknownValueError:
     print("Sphinx could not understand audio")
 except sr.RequestError as e:
