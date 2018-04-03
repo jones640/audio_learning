@@ -26,7 +26,7 @@ ftypes = [
     ('All files', '*'), 
 ]
 
-"""source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a video file to be analyzed', filetypes=ftypes)
+source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a video file to be analyzed', filetypes=ftypes)
 
 init_filename_list = source_file.split('/')
 init_filename = init_filename_list[-1]
@@ -40,7 +40,7 @@ ff = ffmpy.FFmpeg(
     outputs={str(filename_base) + ".wav": None}
 )
 ff.run()
-"""
+
 # for just Audio file in .wav form
 
 source_audio_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select an audio file to be analyzed', filetypes=ftypes)
