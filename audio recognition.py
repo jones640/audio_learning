@@ -3,7 +3,7 @@
 from pyaudio import *
 from pocketsphinx import *
 import speech_recognition as sr
-#from ffmpy import *
+import ffmpy as ffmpy
 #from SpeechRecognition import *
 import Tkinter # Python GUI package
 import tkFileDialog # for Dialog Box
@@ -35,11 +35,7 @@ filename_base = filename_base_list[0]
 
 print(str(filename_base) + ".wav")
 
-ff = ffmpy.FFmpeg(
-    inputs={source_file: None}, 
-    outputs={str(filename_base) + ".wav": None}
-)
-ff.run()
+ffmpy.FFmpeg(inputs={source_file: None}, outputs={str(filename_base) + ".wav": None}).run()
 
 # for just Audio file in .wav form
 
