@@ -9,47 +9,65 @@ import Tkinter # Python GUI package
 import tkFileDialog # for Dialog Box
 import traceback # for error checking
 import tkMessageBox
+import subprocess
 import os, sys, datetime, time
 from datetime import datetime
 
 gui = Tkinter.Tk()
 gui.attributes("-topmost")
 gui.withdraw()
-initialdir = "/home/alex/audio_recognition/videos"
+initialdir = "/home/alex/audio_recognition/videos/"
+submit_time = datetime.now().strftime("%Y%m%d_%H%M")
 
 ftypes = [
+    ('All files', '*'),
     ('Python code files', '*.py'), 
     ('Perl code files', '*.pl;*.pm'),  # semicolon trick
     ('Java code files', '*.java'), 
     ('C++ code files', '*.cpp;*.h'),   # semicolon trick
-    ('Text files', '*.txt'), 
-    ('All files', '*'), 
+    ('Text files', '*.txt') 
 ]
 
-source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a video file to be analyzed', filetypes=ftypes)
+source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
 
-init_filename_list = source_file.split('/')
-init_filename = init_filename_list[-1]
-filename_base_list = init_filename.split('.')
-filename_base = filename_base_list[0]
+def convert(source_file):
+    init_filename_list = source_file.split('/')
+    init_filename = init_filename_list[-1]
+    filename_base_list = init_filename.split('.')
+    filename_base = filename_base_list[0]
+    filename = str("audios/" + str(filename_base) + "_" + submit_time + ".wav")
+    command = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+    subprocess.check_output(command, shell=True)
+    return filename
+    # Once converted to .wav format we can now use for speech recognition
 
-print(str(filename_base) + ".wav")
+def sphinx_recognize(source_file):
+    r = sr.Recognizer()
+    with sr.AudioFile(source_file) as source:
+        audio = r.record(source) # read the entire audio file
+    try:
+        print("Sphinx thinks you said:  \n\n")
+        print('"'r.recognize_sphinx(audio)'"')
+        print("\n\n")
+    except sr.UnknownValueError:
+        print("Sphinx could not understand audio")
+    except sr.RequestError as e:
+        print("Sphinx error; {0}".format(e))
 
-ffmpy.FFmpeg(inputs={source_file: None}, outputs={str(filename_base) + ".wav": None}).run()
+#source_audio_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a .wav file to be analyzed', filetypes=ftypes)
+        
+print(str(source_file))
 
-# for just Audio file in .wav form
-
-source_audio_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select an audio file to be analyzed', filetypes=ftypes)
-
-# use the source_audio_file as the audio source
-r = sr.Recognizer()
-with sr.AudioFile(source_audio_file) as source:
-    audio = r.record(source) # read the entire audio file
-
-print(str(source_audio_file))
-
+if source_file.endswith('.wav'):
+    print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
+    sphinx_recognize(source_file)
+else:
+    filename = convert(source_file)
+    print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
+    sphinx_recognize(filename)
+        
 """try:
-    print("Google thinks you said:  '" + r. recognize_google(audio) + "'")
+    print("Google thinks you said:  \n\n'" + r. recognize_google(audio) + "'\n\n")
 except sr.UnknownValueError:
     print("Google could not understand audio")
 except sr.RequestError as e:
@@ -58,12 +76,5 @@ except sr.RequestError as e:
  
 print("Starting Sphinx")
 """
-
-try:
-    print("Sphinx thinks you said:  '" + r.recognize_sphinx(audio) + "'")
-except sr.UnknownValueError:
-    print("Sphinx could not understand audio")
-except sr.RequestError as e:
-    print("Sphinx error; {0}".format(e))
     
 
