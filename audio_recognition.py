@@ -68,6 +68,11 @@ def google_recognize(source_file):
     except sr.RequestError as e:
         print("Could not complete request for Google Speech Recognition service; {0}".format(e))
         
+def write_caption(video, captions):
+    for clip in captions:
+        video = VideoFileClip(str(video)).subclip(clip[0], clip[1])
+        txt_clip = (TextClip(str(clip[3]), fontsize=18,color='white').set_position('center').set_duration(clip[1]-clip[0])) 
+        
 print(str(source_file))
 
 if source_file.endswith('.wav'):
