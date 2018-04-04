@@ -2,6 +2,7 @@
 
 from pyaudio import *
 from pocketsphinx import *
+from moviepy.editor import *
 import speech_recognition as sr
 import ffmpy as ffmpy
 #from SpeechRecognition import *
@@ -47,7 +48,7 @@ def sphinx_recognize(source_file):
         audio = r.record(source) # read the entire audio file
     try:
         print("Sphinx thinks you said:  \n\n")
-        print('"'r.recognize_sphinx(audio)'"')
+        print('"' + r.recognize_sphinx(audio) + '"')
         print("\n\n")
     except sr.UnknownValueError:
         print("Sphinx could not understand audio")
@@ -60,7 +61,7 @@ def google_recognize(source_file):
         audio = r.record(source) # read the entire audio file
     try:    
         print("Google thinks you said:  \n\n")
-        print('"'r.recognize_google(audio)'"')
+        print('"' + r.recognize_google(audio) + '"')
         print("\n\n")
     except sr.UnknownValueError:
         print("Google could not understand audio")
