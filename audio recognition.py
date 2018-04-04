@@ -54,7 +54,18 @@ def sphinx_recognize(source_file):
     except sr.RequestError as e:
         print("Sphinx error; {0}".format(e))
 
-#source_audio_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a .wav file to be analyzed', filetypes=ftypes)
+def google_recognize(source_file):
+    r = sr.Recognizer()
+    with sr.AudioFile(source_file) as source:
+        audio = r.record(source) # read the entire audio file
+    try:    
+        print("Google thinks you said:  \n\n")
+        print('"'r.recognize_google(audio)'"')
+        print("\n\n")
+    except sr.UnknownValueError:
+        print("Google could not understand audio")
+    except sr.RequestError as e:
+        print("Could not complete request for Google Speech Recognition service; {0}".format(e))
         
 print(str(source_file))
 
@@ -66,15 +77,7 @@ else:
     print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
     sphinx_recognize(filename)
         
-"""try:
-    print("Google thinks you said:  \n\n'" + r. recognize_google(audio) + "'\n\n")
-except sr.UnknownValueError:
-    print("Google could not understand audio")
-except sr.RequestError as e:
-    print("Could not complete request for Google Speech Recognition service; {0}".format(e))
 
- 
-print("Starting Sphinx")
-"""
+
     
 
