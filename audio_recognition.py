@@ -45,11 +45,17 @@ def convert(source_file):
 def sphinx_recognize(source_file):
     r = sr.Recognizer()
     with sr.AudioFile(source_file) as source:
+        framerate = 100
         audio = r.record(source) # read the entire audio file
+        decoder = r.recognize_sphinx(audio, show_all=False)
     try:
+        print([(seg.word, seg.start_frame/framerate)for seg in decoder])
         print("Sphinx thinks you said:  \n\n")
-        print('"' + r.recognize_sphinx(audio) + '"')
+        print('"' + decoder + '"')
         print("\n\n")
+        #print(decoder.seg())
+        print("\n\n")
+        
     except sr.UnknownValueError:
         print("Sphinx could not understand audio")
     except sr.RequestError as e:
