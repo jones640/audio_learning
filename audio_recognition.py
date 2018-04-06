@@ -3,6 +3,8 @@
 from pyaudio import *
 from pocketsphinx import *
 from moviepy.editor import *
+from pydub import AudioSegment
+from pydub.silence import split_on_silence
 import speech_recognition as sr
 import ffmpy as ffmpy
 #from SpeechRecognition import *
@@ -31,6 +33,17 @@ ftypes = [
 
 source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
 
+def split_audio(filename):
+    sound_file = AudioSegment.from_wav(filename)
+    print(str(sound_file))
+    audio_chunks = split_on_silence(sound_file, min_silence_len=100, silence_thresh=20)
+    print(str(len(audio_chunks)))
+    for i, chunk in enumerate(audio_chunks):
+        print(str(i, chunk))
+        out_file = "audio_learning/audios/" + filename + "_splitAudio/" + filename + "_chunk{0}.wav".format(i)
+        print("exporting", out_file)
+        chunk.export(out_file, format="wav") 
+
 def convert(source_file):
     init_filename_list = source_file.split('/')
     init_filename = init_filename_list[-1]
@@ -49,7 +62,7 @@ def sphinx_recognize(source_file):
         audio = r.record(source) # read the entire audio file
         decoder = r.recognize_sphinx(audio, show_all=False)
     try:
-        print([(seg.word, seg.start_frame/framerate)for seg in decoder])
+        #print([(seg.word, seg.start_frame/framerate)for seg in decoder])
         print("Sphinx thinks you said:  \n\n")
         print('"' + decoder + '"')
         print("\n\n")
@@ -82,12 +95,14 @@ def write_caption(video, captions):
 print(str(source_file))
 
 if source_file.endswith('.wav'):
+    split_audio(source_file)
     print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
-    sphinx_recognize(source_file)
+    #sphinx_recognize(source_file)
 else:
     filename = convert(source_file)
+    split_audio(filename)
     print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
-    sphinx_recognize(filename)
+    #sphinx_recognize(filename)
         
 
 
