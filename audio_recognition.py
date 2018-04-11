@@ -33,26 +33,40 @@ ftypes = [
 
 source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
 
-def split_audio(filename):
+def split_audio(filename, filepath):
     sound_file = AudioSegment.from_wav(filename)
-    print(str(sound_file))
-    audio_chunks = split_on_silence(sound_file, min_silence_len=100, silence_thresh=20)
-    print(str(len(audio_chunks)))
-    for i, chunk in enumerate(audio_chunks):
-        print(str(i, chunk))
-        out_file = "audio_learning/audios/" + filename + "_splitAudio/" + filename + "_chunk{0}.wav".format(i)
+    print(len(sound_file))
+    iterations = len(sound_file)/5000
+    left_over = len(sound_file)-(iterations*5000)
+    print str(iterations)
+    print str(left_over)
+    iteration = 1
+    #audio_chunks = split_on_silence(sound_file, min_silence_len=10, silence_thresh=100)
+    #print(str(audio_chunks))
+    #for i, chunk in enumerate(audio_chunks):
+    #    print(str(i, chunk))
+    #    out_file = "audio_learning/audios/" + filename + "_splitAudio/" + filename + "_chunk{0}.wav".format(i)
+    #    print("exporting", out_file)
+    #    chunk.export(out_file, format="wav") 
+    while iteration <= iterations:
+        clip = sound_file[iteration*5000:(iteration*5000)+5000]
+        out_file = filepath + "/" + filename_base + "_chunk" + str(iteration) + ".wav"
         print("exporting", out_file)
-        chunk.export(out_file, format="wav") 
+        clip.export(out_file, format="wav")
+        iteration = iteration + 1
+    last_clip = sound_file[-left_over:]
+    out_file_last = filepath + "/" + filename_base + "_chunk" + str(iterations + 1) + ".wav"
+    print ("exporting", out_file_last)
+    last_clip.export(out_file_last, format="wav")    
 
-def convert(source_file):
-    init_filename_list = source_file.split('/')
-    init_filename = init_filename_list[-1]
-    filename_base_list = init_filename.split('.')
-    filename_base = filename_base_list[0]
-    filename = str("audios/" + str(filename_base) + "_" + submit_time + ".wav")
-    command = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-    subprocess.check_output(command, shell=True)
-    return filename
+def convert(filename_base):
+    filename = str("audios/" + str(filename_base) + ".wav")
+    command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+    subprocess.check_output(command1, shell=True)
+    filepath = str("audios/" + str(filename_base) + "_split_audio")
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+    return filename, filepath
     # Once converted to .wav format we can now use for speech recognition
 
 def sphinx_recognize(source_file):
@@ -94,13 +108,18 @@ def write_caption(video, captions):
         
 print(str(source_file))
 
+init_filename_list = source_file.split('/')
+init_filename = init_filename_list[-1]
+filename_base_list = init_filename.split('.')
+filename_base = filename_base_list[0] + "_" + submit_time
+
 if source_file.endswith('.wav'):
-    split_audio(source_file)
+    split_audio(filename_base, filepath)
     print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
     #sphinx_recognize(source_file)
 else:
-    filename = convert(source_file)
-    split_audio(filename)
+    (filename, filepath) = convert(filename_base)
+    split_audio(filename, filepath)
     print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
     #sphinx_recognize(filename)
         
