@@ -34,38 +34,27 @@ filename_base = filename_base_list[0] + "_" + submit_time
 filename = str("audios/" + str(filename_base) + ".wav")
 filepath = str("audios/" + str(filename_base) + "_split_audio")
 
-################################################################################
-
-def split_and_transcribe_audio(filename, filepath):
+def split_audio(filename, filepath):
     sound_file = AudioSegment.from_wav(filename)
     print(len(sound_file))
     iterations = len(sound_file)/3000
-    roundlength = (len(sound_file)/1000)*1000
-    left_over = roundlength-(iterations*3000)
+    left_over = len(sound_file)-(iterations*3000)
     print str(iterations)
     print str(left_over)
     iteration = 1
     chunks = []
-    captions = []
-    r = sr.Recognizer()    
+    #audio_chunks = split_on_silence(sound_file, min_silence_len=10, silence_thresh=100)
+    #print(str(audio_chunks))
+    #for i, chunk in enumerate(audio_chunks):
+    #    print(str(i, chunk))
+    #    out_file = "audio_learning/audios/" + filename + "_splitAudio/" + filename + "_chunk{0}.wav".format(i)
+    #    print("exporting", out_file)
+    #    chunk.export(out_file, format="wav") 
     while iteration <= iterations:
-        clip = sound_file[(iteration*3000)-3000:iteration*3000]
+        clip = sound_file[iteration*3000:(iteration*3000)+3000]
         out_file = filepath + "/" + filename_base + "_chunk" + str(iteration) + ".wav"
         print("exporting", out_file)
         clip.export(out_file, format="wav")
-        with sr.AudioFile(out_file) as source:
-            framerate = 100
-            audio = r.record(source)
-            decoder = r.recognize_sphinx(audio, show_all=False)
-        try:
-            print("Sphinx thinks you said:  \n\n")
-            print('"' + decoder + '"')
-            captions.append((str(decoder), (iteration*3000)-3000, iteration*3000))
-            print("\n\n")
-        except sr.UnknownValueError:
-            print("Sphinx could not understand audio")
-        except sr.RequestError as e:
-            print("Sphinx error; {0}".format(e))
         iteration = iteration + 1
         chunks.append(str(out_file))
     last_clip = sound_file[-left_over:]
@@ -73,56 +62,38 @@ def split_and_transcribe_audio(filename, filepath):
     chunks.append(str(out_file_last))
     print ("exporting", out_file_last)
     last_clip.export(out_file_last, format="wav")
-    with sr.AudioFile(out_file) as source:
-        framerate = 100
-        audio = r.record(source)
-        decoder = r.recognize_sphinx(audio, show_all=False)
-    try:
-        print("Sphinx thinks you said:  \n\n")
-        print('"' + decoder + '"')
-        captions.append((str(decoder), roundlength-left_over, roundlength))
-        print("\n\n")
-    except sr.UnknownValueError:
-        print("Sphinx could not understand audio")
-    except sr.RequestError as e:
-        print("Sphinx error; {0}".format(e))
+    return (chunks)
 
-    return (chunks, captions)
-    
-################################################################################
-
-def convert_or_copy(filename_base, filepath):
+def convert(filename_base, filepath):
     command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
     subprocess.check_output(command1, shell=True)
     if not os.path.exists(filepath):
         os.makedirs(filepath)
-        
-################################################################################
+    # Once converted to .wav format we can now use for speech recognition
 
-def sphinx_recognize(source_file, iteration):
+def sphinx_recognize(source_file):
     r = sr.Recognizer()
     with sr.AudioFile(source_file) as source:
         framerate = 100
-        audio = r.record(source)
+        audio = r.record(source) # read the entire audio file
         decoder = r.recognize_sphinx(audio, show_all=False)
     try:
+        #print([(seg.word, seg.start_frame/framerate)for seg in decoder])
         print("Sphinx thinks you said:  \n\n")
         print('"' + decoder + '"')
-        captions.append(str(decoder), iteration)
-        
+        print("\n\n")
+        #print(decoder.seg())
         print("\n\n")
         
     except sr.UnknownValueError:
         print("Sphinx could not understand audio")
     except sr.RequestError as e:
         print("Sphinx error; {0}".format(e))
-        
-################################################################################
 
 def google_recognize(source_file):
     r = sr.Recognizer()
     with sr.AudioFile(source_file) as source:
-        audio = r.record(source)
+        audio = r.record(source) # read the entire audio file
     try:    
         print("Google thinks you said:  \n\n")
         print('"' + r.recognize_google(audio) + '"')
@@ -132,31 +103,29 @@ def google_recognize(source_file):
     except sr.RequestError as e:
         print("Could not complete request for Google Speech Recognition service; {0}".format(e))
         
-################################################################################
         
-def write_caption(source_file, captions, filename_base):
-    for caption in captions:
-        video = VideoFileClip(source_file).subclip(caption[1], caption[2])
-        txt_clip = (TextClip(str(caption[0]), fontsize=18,color='white').set_position('center').set_duration(caption[2]-caption[1])) 
-        result = CompositeVideoClip([video, txt_clip])
-        filename_out = str("videos/" + str(filename_base) + "_C.mp4")
-        result.write_videofile(filename_out, fps = 100)
+        
+        
+def write_caption(video, captions):
+    for clip in captions:
+        video = VideoFileClip(str(video)).subclip(clip[0], clip[1])
+        txt_clip = (TextClip(str(clip[3]), fontsize=18,color='white').set_position('center').set_duration(clip[1]-clip[0])) 
         
 
-################################################################################
-#########################Actual Script##########################################
 
 
-convert_or_copy(filename_base, filepath)
-(clips, captions) = split_and_transcribe_audio(filename, filepath)
-print captions
-write_caption(source_file, captions, filename_base)        
-        
-        
-        
-        
-        
-        
-        
-        
-        
+if source_file.endswith('.wav'):
+    clips = split_audio(filename_base, filepath)
+    print clips
+    print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
+    for clip in clips:
+        print clip
+        sphinx_recognize(clip)
+else:
+    convert(filename_base, filepath)
+    clips = split_audio(filename, filepath)
+    print clips
+    print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
+    for clip in clips:
+        print clip
+        sphinx_recognize(clip)
