@@ -36,11 +36,12 @@ source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, ti
 def split_audio(filename, filepath):
     sound_file = AudioSegment.from_wav(filename)
     print(len(sound_file))
-    iterations = len(sound_file)/5000
-    left_over = len(sound_file)-(iterations*5000)
+    iterations = len(sound_file)/3000
+    left_over = len(sound_file)-(iterations*3000)
     print str(iterations)
     print str(left_over)
     iteration = 1
+    chunks = []
     #audio_chunks = split_on_silence(sound_file, min_silence_len=10, silence_thresh=100)
     #print(str(audio_chunks))
     #for i, chunk in enumerate(audio_chunks):
@@ -49,24 +50,24 @@ def split_audio(filename, filepath):
     #    print("exporting", out_file)
     #    chunk.export(out_file, format="wav") 
     while iteration <= iterations:
-        clip = sound_file[iteration*5000:(iteration*5000)+5000]
+        clip = sound_file[iteration*3000:(iteration*3000)+3000]
         out_file = filepath + "/" + filename_base + "_chunk" + str(iteration) + ".wav"
         print("exporting", out_file)
         clip.export(out_file, format="wav")
         iteration = iteration + 1
+        chunks.append(str(out_file))
     last_clip = sound_file[-left_over:]
     out_file_last = filepath + "/" + filename_base + "_chunk" + str(iterations + 1) + ".wav"
+    chunks.append(str(out_file_last))
     print ("exporting", out_file_last)
-    last_clip.export(out_file_last, format="wav")    
+    last_clip.export(out_file_last, format="wav")
+    return (chunks)
 
-def convert(filename_base):
-    filename = str("audios/" + str(filename_base) + ".wav")
+def convert(filename_base, filepath):
     command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
     subprocess.check_output(command1, shell=True)
-    filepath = str("audios/" + str(filename_base) + "_split_audio")
     if not os.path.exists(filepath):
         os.makedirs(filepath)
-    return filename, filepath
     # Once converted to .wav format we can now use for speech recognition
 
 def sphinx_recognize(source_file):
@@ -101,29 +102,40 @@ def google_recognize(source_file):
     except sr.RequestError as e:
         print("Could not complete request for Google Speech Recognition service; {0}".format(e))
         
+        
+        
+        
 def write_caption(video, captions):
     for clip in captions:
         video = VideoFileClip(str(video)).subclip(clip[0], clip[1])
         txt_clip = (TextClip(str(clip[3]), fontsize=18,color='white').set_position('center').set_duration(clip[1]-clip[0])) 
         
+        
+        
+        
 print(str(source_file))
+
 
 init_filename_list = source_file.split('/')
 init_filename = init_filename_list[-1]
 filename_base_list = init_filename.split('.')
 filename_base = filename_base_list[0] + "_" + submit_time
+filename = str("audios/" + str(filename_base) + ".wav")
+filepath = str("audios/" + str(filename_base) + "_split_audio")
+
 
 if source_file.endswith('.wav'):
-    split_audio(filename_base, filepath)
+    clips = split_audio(filename_base, filepath)
+    print clips
     print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
-    #sphinx_recognize(source_file)
+    for clip in clips:
+        print clip
+        sphinx_recognize(clip)
 else:
-    (filename, filepath) = convert(filename_base)
-    split_audio(filename, filepath)
+    convert(filename_base, filepath)
+    clips = split_audio(filename, filepath)
+    print clips
     print("\n\nSphinx is now analyzing the audio for speech recognition\n\n")
-    #sphinx_recognize(filename)
-        
-
-
-    
-
+    for clip in clips:
+        print clip
+        sphinx_recognize(clip)
