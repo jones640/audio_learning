@@ -31,8 +31,10 @@ init_filename_list = source_file.split('/')
 init_filename = init_filename_list[-1]
 filename_base_list = init_filename.split('.')
 filename_base = filename_base_list[0] + "_" + submit_time
-filename = str("audios/" + str(filename_base) + ".wav")
-filepath = str("audios/" + str(filename_base) + "_split_audio")
+filepath = str("audios/" + str(filename_base) + "_audiofiles")
+filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
+filenamevideo = str("videos/" + str(filename_base) + ".mkv")
+
 
 ################################################################################
 
@@ -92,30 +94,17 @@ def split_and_transcribe_audio(filename, filepath):
 ################################################################################
 
 def convert_or_copy(filename_base, filepath):
-    command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-    subprocess.check_output(command1, shell=True)
-    if not os.path.exists(filepath):
-        os.makedirs(filepath)
-        
-################################################################################
+    if source_file.endswith(".mp4"):
+        print str(len(source_file)) + "MP4 \n\n\n\n\n\n\n\n\n\n"
+        command2 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filenamevideo))
+        subprocess.check_output(command2, shell=True)
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
+    else:
+        print "Not an MP4 \n\n\n\n\n"
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
 
-def sphinx_recognize(source_file, iteration):
-    r = sr.Recognizer()
-    with sr.AudioFile(source_file) as source:
-        framerate = 100
-        audio = r.record(source)
-        decoder = r.recognize_sphinx(audio, show_all=False)
-    try:
-        print("Sphinx thinks you said:  \n\n")
-        print('"' + decoder + '"')
-        captions.append(str(decoder), iteration)
-        
-        print("\n\n")
-        
-    except sr.UnknownValueError:
-        print("Sphinx could not understand audio")
-    except sr.RequestError as e:
-        print("Sphinx error; {0}".format(e))
         
 ################################################################################
 
@@ -135,18 +124,26 @@ def google_recognize(source_file):
 ################################################################################
         
 def write_caption(source_file, captions, filename_base):
+    source_video = VideoFileClip(source_file)
+    source_video.set_duration(len(source_file))
+    filename_convert = str("videos/" + str(filename_base) + "_converted.avi")
+    source_video.write_videofile(filename_convert)
     for caption in captions:
-        video = VideoFileClip(source_file).subclip(caption[1], caption[2])
-        txt_clip = (TextClip(str(caption[0]), fontsize=18,color='white').set_position('center').set_duration(caption[2]-caption[1])) 
+        print caption
+        video = VideoFileClip(filename_convert).subclip(caption[1], caption[2])
+        print str(video)
+        txt_clip = (TextClip(str(caption[0]), fontsize=18,color='white').set_position('center').set_duration(caption[2]-caption[1]))
+        print str(txt_clip) 
         result = CompositeVideoClip([video, txt_clip])
         filename_out = str("videos/" + str(filename_base) + "_C.mp4")
-        result.write_videofile(filename_out, fps = 100)
+        result.write_videofile(filename_out)
         
 
 ################################################################################
 #########################Actual Script##########################################
 
-
+if not os.path.exists(filepath):
+    os.makedirs(filepath)
 convert_or_copy(filename_base, filepath)
 (clips, captions) = split_and_transcribe_audio(filename, filepath)
 print captions
