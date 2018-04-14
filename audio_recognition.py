@@ -35,10 +35,25 @@ filepath = str("audios/" + str(filename_base) + "_audiofiles")
 filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
 filenamevideo = str("videos/" + str(filename_base) + ".mkv")
 
+################################################################################
 
+def convert_or_copy(filename_base, filepath):
+    if source_file.endswith(".mp4"):
+        print str(len(source_file)) + "    MP4 \n\n\n\n\n\n\n\n\n\n"
+        command2 = str("ffmpeg -i " + str(source_file) + " " + str(filenamevideo))
+        subprocess.check_output(command2, shell=True)
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
+    else:
+        print "Not an MP4 \n\n\n\n\n"
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
+        
 ################################################################################
 
 def split_and_transcribe_audio(filename, filepath):
+    srtfile_path = filepath + "/" + filename_base + "_subtitles.txt"
+    srtfile = open(srtfile_path, "w")
     sound_file = AudioSegment.from_wav(filename)
     print(len(sound_file))
     iterations = len(sound_file)/3000
@@ -63,6 +78,30 @@ def split_and_transcribe_audio(filename, filepath):
             print("Sphinx thinks you said:  \n\n")
             print('"' + decoder + '"')
             captions.append((str(decoder), (iteration*3000)-3000, iteration*3000))
+            if len(sound_file) < 60000:
+                shour = str(0)
+                sminute = str(00)
+                ssecond = str(((iteration*3000)-3000)/1000)
+                smilli = (000)
+                fhour = str(0)
+                fminute = str(00)
+                fsecond = str((iteration*3000)/1000)
+                fmilli = (000)
+            elif len(sound_file) < 3600000:
+                shour = str(0)
+                sminute = str(((iteration*3000)-3000)/60000)
+                ssecond = str((((iteration*3000)-3000)-(sminute*60000))/1000)
+                smilli = (000)
+                fhour = str(0)
+                if ssecond < 1000: 
+                    fminute = str(sminute-1000)
+                    fsecond = 
+                else:
+                    fminute = sminute
+                    fsecond =     
+                fsecond = str((iteration*3000)-(fminute*60000))
+                fmilli = (000)
+            srtfile.write(str(iteration) + "\n0:" + str(sminute) + ":" + str(ssecond) + ",000 --> 0:00:03,000 \n" + str(decoder) + "\n\n")
             print("\n\n")
         except sr.UnknownValueError:
             print("Sphinx could not understand audio")
@@ -90,20 +129,6 @@ def split_and_transcribe_audio(filename, filepath):
         print("Sphinx error; {0}".format(e))
 
     return (chunks, captions)
-    
-################################################################################
-
-def convert_or_copy(filename_base, filepath):
-    if source_file.endswith(".mp4"):
-        print str(len(source_file)) + "MP4 \n\n\n\n\n\n\n\n\n\n"
-        command2 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filenamevideo))
-        subprocess.check_output(command2, shell=True)
-        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-        subprocess.check_output(command1, shell=True)
-    else:
-        print "Not an MP4 \n\n\n\n\n"
-        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-        subprocess.check_output(command1, shell=True)
 
         
 ################################################################################
@@ -124,13 +149,13 @@ def google_recognize(source_file):
 ################################################################################
         
 def write_caption(source_file, captions, filename_base):
-    source_video = VideoFileClip(source_file)
-    source_video.set_duration(len(source_file))
-    filename_convert = str("videos/" + str(filename_base) + "_converted.avi")
-    source_video.write_videofile(filename_convert)
+    #source_video = VideoFileClip(source_file)
+    #source_video.set_duration(len(source_file))
+    #filename_convert = str("videos/" + str(filename_base) + "_converted.mkv")
+    #source_video.write_videofile(filename_convert)
     for caption in captions:
         print caption
-        video = VideoFileClip(filename_convert).subclip(caption[1], caption[2])
+        video = VideoFileClip(filenamevideo).subclip(caption[1], caption[2])
         print str(video)
         txt_clip = (TextClip(str(caption[0]), fontsize=18,color='white').set_position('center').set_duration(caption[2]-caption[1]))
         print str(txt_clip) 
@@ -141,6 +166,9 @@ def write_caption(source_file, captions, filename_base):
 
 ################################################################################
 #########################Actual Script##########################################
+
+
+
 
 if not os.path.exists(filepath):
     os.makedirs(filepath)
