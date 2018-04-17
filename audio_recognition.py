@@ -33,7 +33,7 @@ filename_base_list = init_filename.split('.')
 filename_base = filename_base_list[0] + "_" + submit_time
 filepath = str("audios/" + str(filename_base) + "_audiofiles")
 filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
-filenamevideo = str("videos/" + str(filename_base) + ".mkv")
+filenamevideo = str("videos/" + str(filename_base))
 
 ################################################################################
 
@@ -169,7 +169,7 @@ def split_and_transcribe_audio(filename, filepath):
     except sr.RequestError as e:
         print("Sphinx error; {0}".format(e))
 
-    return (chunks, captions)
+    return (srtfile_path)
 
         
 ################################################################################
@@ -188,12 +188,22 @@ def google_recognize(source_file):
         print("Could not complete request for Google Speech Recognition service; {0}".format(e))
         
 ################################################################################
-        
+
+def video(name):
+    for extension in ['.mp4', '.avi', '.mkv']:
+        if name.endswith(extension):
+            return True
+    return False
+
+
 def write_caption(filepath, filename_base):
     srtfile_path_orig = filepath + "/" + filename_base + "_subtitles.txt"
     srtfile_path_capt = filepath + "/" + filename_base + "_subtitles.srt"
     command3 = str("cp " + str(srtfile_path_orig) + " " + str(srtfile_path_capt))
     subprocess.check_output(command3, shell=True)
+    command = 'ffmpeg -i ' + source_file + ' -i ' + srtfile_path_capt + ' -c:s mov_text -c:v copy -c:a copy ' + filenamevideo + '_c.mp4'
+    if video(source_file):
+        subprocess.check_output(command, shell=True)
 
 
 
@@ -224,7 +234,7 @@ def write_caption(filepath, filename_base):
 if not os.path.exists(filepath):
     os.makedirs(filepath)
 convert_or_copy(filename_base, filepath)
-(clips, captions) = split_and_transcribe_audio(filename, filepath)
+srtfile_path = split_and_transcribe_audio(filename, filepath)
 write_caption(filepath, filename_base)        
         
         
