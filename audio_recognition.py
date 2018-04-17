@@ -40,8 +40,8 @@ filenamevideo = str("videos/" + str(filename_base) + ".mkv")
 def convert_or_copy(filename_base, filepath):
     if source_file.endswith(".mp4"):
         print str(len(source_file)) + "    MP4 \n\n\n\n\n\n\n\n\n\n"
-        command2 = str("ffmpeg -i " + str(source_file) + " " + str(filenamevideo))
-        subprocess.check_output(command2, shell=True)
+        #command2 = str("ffmpeg -i " + str(source_file) + " " + str(filenamevideo))
+        #subprocess.check_output(command2, shell=True)
         command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
         subprocess.check_output(command1, shell=True)
     else:
@@ -55,54 +55,67 @@ def split_and_transcribe_audio(filename, filepath):
     srtfile_path = filepath + "/" + filename_base + "_subtitles.txt"
     srtfile = open(srtfile_path, "w")
     sound_file = AudioSegment.from_wav(filename)
-    print(len(sound_file))
     iterations = len(sound_file)/3000
-    roundlength = (len(sound_file)/1000)*1000
-    left_over = roundlength-(iterations*3000)
-    print str(iterations)
-    print str(left_over)
+    total_run_time = len(sound_file)
+    left_over = (total_run_time) - (iterations*3000)
     iteration = 1
     chunks = []
     captions = []
     r = sr.Recognizer()    
+    running_time = 000
     while iteration <= iterations:
         clip = sound_file[(iteration*3000)-3000:iteration*3000]
         out_file = filepath + "/" + filename_base + "_chunk" + str(iteration) + ".wav"
-        print("exporting", out_file)
         clip.export(out_file, format="wav")
+        analysis_out_file = AudioSegment.from_wav(out_file)
         with sr.AudioFile(out_file) as source:
             framerate = 100
             audio = r.record(source)
             decoder = r.recognize_sphinx(audio, show_all=False)
         try:
-            print("Sphinx thinks you said:  \n\n")
-            print('"' + decoder + '"')
             captions.append((str(decoder), (iteration*3000)-3000, iteration*3000))
             if len(sound_file) < 60000:
                 shour = str(0)
                 sminute = str(00)
-                ssecond = str(((iteration*3000)-3000)/1000)
-                smilli = (000)
+                ssecond = ((running_time)/1000)
+                smilli = (running_time - (ssecond*1000))
+                running_time = (running_time + len(analysis_out_file))
                 fhour = str(0)
                 fminute = str(00)
-                fsecond = str((iteration*3000)/1000)
-                fmilli = (000)
+                fsecond = ((running_time)/1000)
+                fmilli = (running_time - (fsecond*1000))
             elif len(sound_file) < 3600000:
                 shour = str(0)
-                sminute = str(((iteration*3000)-3000)/60000)
-                ssecond = str((((iteration*3000)-3000)-(sminute*60000))/1000)
-                smilli = (000)
+                sminute = ((running_time)/60000)
+                ssecond = (((running_time) - (sminute*60000))/1000)
+                smilli = ((running_time) - (sminute*60000) - (ssecond*1000))
+                running_time = (running_time + len(analysis_out_file))
                 fhour = str(0)
-                if ssecond < 1000: 
-                    fminute = str(sminute-1000)
-                    fsecond = 
-                else:
-                    fminute = sminute
-                    fsecond =     
-                fsecond = str((iteration*3000)-(fminute*60000))
-                fmilli = (000)
-            srtfile.write(str(iteration) + "\n0:" + str(sminute) + ":" + str(ssecond) + ",000 --> 0:00:03,000 \n" + str(decoder) + "\n\n")
-            print("\n\n")
+                fminute = ((running_time)/60000)
+                fsecond = (((running_time) - (fminute*60000))/1000)
+                fmilli = ((running_time) - (fminute*60000) - (fsecond*1000))
+            if sminute < 10:
+                sminute = (str(0) + str(sminute))
+            if ssecond < 10:
+                ssecond = (str(0) + str(ssecond))
+            if smilli < 1:
+                smilli = str('000')
+            elif smilli < 10:
+                smilli = (str(00) + str(smilli))
+            elif smilli < 100:
+                smilli = (str(0) + str(smilli))
+            if fminute < 10:
+                fminute = (str(0) + str(fminute))
+            if fsecond < 10:
+                fsecond = (str(0) + str(fsecond))
+            if fmilli < 1:
+                fmilli = str('000')
+            if fmilli < 10:
+                fmilli = (str(00) + str(smilli))
+            elif fmilli < 100:
+                fmilli = (str(0) + str(smilli))
+            srtfile.write(str(iteration) + "\n" + str(shour) + ":" + str(sminute) + ":" + str(ssecond) + "," + str(smilli) + " --> " + str(fhour) + ":" + str(fminute) + ":" + str(fsecond) + "," + str(fmilli) + "\n" + str(decoder) + "\n\n")
+            print(str(iteration) + "\n" + str(shour) + ":" + str(sminute) + ":" + str(ssecond) + "," + str(smilli) + " --> " + str(fhour) + ":" + str(fminute) + ":" + str(fsecond) + "," + str(fmilli) + "\n" + str(decoder) + "\n")
         except sr.UnknownValueError:
             print("Sphinx could not understand audio")
         except sr.RequestError as e:
@@ -112,17 +125,45 @@ def split_and_transcribe_audio(filename, filepath):
     last_clip = sound_file[-left_over:]
     out_file_last = filepath + "/" + filename_base + "_chunk" + str(iterations + 1) + ".wav"
     chunks.append(str(out_file_last))
-    print ("exporting", out_file_last)
     last_clip.export(out_file_last, format="wav")
-    with sr.AudioFile(out_file) as source:
+    analysis_out_file = AudioSegment.from_wav(out_file_last)
+    with sr.AudioFile(out_file_last) as source:
         framerate = 100
         audio = r.record(source)
         decoder = r.recognize_sphinx(audio, show_all=False)
     try:
-        print("Sphinx thinks you said:  \n\n")
-        print('"' + decoder + '"')
-        captions.append((str(decoder), roundlength-left_over, roundlength))
-        print("\n\n")
+        captions.append((str(decoder), running_time, total_run_time))
+        shour = str(0)
+        sminute = ((running_time)/60000)
+        ssecond = (((running_time) - (sminute*60000))/1000)
+        smilli = ((running_time) - (sminute*60000) - (ssecond*1000))
+        running_time = (running_time + len(analysis_out_file))
+        fhour = str(0)
+        fminute = ((running_time)/60000)
+        fsecond = (((running_time) - (fminute*60000))/1000)
+        fmilli = ((running_time) - (fminute*60000) - (fsecond*1000))
+        if sminute < 10:
+            sminute = (str(0) + str(sminute))
+        if ssecond < 10:
+            ssecond = (str(0) + str(ssecond))
+        if smilli < 1:
+            smilli = str('000')
+        elif smilli < 10:
+            smilli = (str(00) + str(smilli))
+        elif smilli < 100:
+            smilli = (str(0) + str(smilli))
+        if fminute < 10:
+            fminute = (str(0) + str(fminute))
+        if fsecond < 10:
+            fsecond = (str(0) + str(fsecond))
+        if fmilli < 1:
+            fmilli = str('000')
+        if fmilli < 10:
+            fmilli = (str(00) + str(smilli))
+        elif fmilli < 100:
+            fmilli = (str(0) + str(smilli))
+        srtfile.write(str(iteration) + "\n" + str(shour) + ":" + str(sminute) + ":" + str(ssecond) + "," + str(smilli) + " --> " + str(fhour) + ":" + str(fminute) + ":" + str(fsecond) + "," + str(fmilli) + "\n" + str(decoder) + "\n\n")
+        print(str(iteration) + "\n" + str(shour) + ":" + str(sminute) + ":" + str(ssecond) + "," + str(smilli) + " --> " + str(fhour) + ":" + str(fminute) + ":" + str(fsecond) + "," + str(fmilli) + "\n" + str(decoder) + "\n")
     except sr.UnknownValueError:
         print("Sphinx could not understand audio")
     except sr.RequestError as e:
@@ -148,34 +189,43 @@ def google_recognize(source_file):
         
 ################################################################################
         
-def write_caption(source_file, captions, filename_base):
+def write_caption(filepath, filename_base):
+    srtfile_path_orig = filepath + "/" + filename_base + "_subtitles.txt"
+    srtfile_path_capt = filepath + "/" + filename_base + "_subtitles.srt"
+    command3 = str("cp " + str(srtfile_path_orig) + " " + str(srtfile_path_capt))
+    subprocess.check_output(command3, shell=True)
+
+
+
+
+
+
+
+
     #source_video = VideoFileClip(source_file)
     #source_video.set_duration(len(source_file))
     #filename_convert = str("videos/" + str(filename_base) + "_converted.mkv")
     #source_video.write_videofile(filename_convert)
-    for caption in captions:
-        print caption
-        video = VideoFileClip(filenamevideo).subclip(caption[1], caption[2])
-        print str(video)
-        txt_clip = (TextClip(str(caption[0]), fontsize=18,color='white').set_position('center').set_duration(caption[2]-caption[1]))
-        print str(txt_clip) 
-        result = CompositeVideoClip([video, txt_clip])
-        filename_out = str("videos/" + str(filename_base) + "_C.mp4")
-        result.write_videofile(filename_out)
+    #for caption in captions:
+    #    print caption
+    #    video = VideoFileClip(filenamevideo).subclip(caption[1], caption[2])
+    #    print str(video)
+    #    txt_clip = (TextClip(str(caption[0]), fontsize=18,color='white').set_position('center').set_duration(caption[2]-caption[1]))
+    #    print str(txt_clip) 
+    #    result = CompositeVideoClip([video, txt_clip])
+    #    filename_out = str("videos/" + str(filename_base) + "_C.mp4")
+    #    result.write_videofile(filename_out)
         
 
 ################################################################################
 #########################Actual Script##########################################
 
 
-
-
 if not os.path.exists(filepath):
     os.makedirs(filepath)
 convert_or_copy(filename_base, filepath)
 (clips, captions) = split_and_transcribe_audio(filename, filepath)
-print captions
-write_caption(source_file, captions, filename_base)        
+write_caption(filepath, filename_base)        
         
         
         
