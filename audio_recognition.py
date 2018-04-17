@@ -1,25 +1,27 @@
 #!/usr/bin/python2.7
 
-from pyaudio import *
+"""
+Dependencies for this script include: pocketsphinx, pydub, speech_recognition, Tkinter, tkFileDialog, traceback, tkMessageBox, subprocess, os, sys, datetime, and time
+"""
+
+
 from pocketsphinx import *
-from moviepy.editor import *
 from pydub import AudioSegment
-from pydub.silence import split_on_silence
+#from pydub.silence import split_on_silence
 import speech_recognition as sr
-import ffmpy as ffmpy
 #from SpeechRecognition import *
 import Tkinter # Python GUI package
 import tkFileDialog # for Dialog Box
 import traceback # for error checking
 import tkMessageBox
 import subprocess
-import os, sys, datetime, time
+import os, sys, time
 from datetime import datetime
 
 gui = Tkinter.Tk()
 gui.attributes("-topmost")
 gui.withdraw()
-initialdir = "/home/alex/audio_recognition/videos/"
+initialdir = os.getcwd()
 submit_time = datetime.now().strftime("%Y%m%d_%H%M")
 
 ftypes = [('All files', '*')]
@@ -29,17 +31,32 @@ init_filename_list = source_file.split('/')
 init_filename = init_filename_list[-1]
 filename_base_list = init_filename.split('.')
 filename_base = filename_base_list[0] + "_" + submit_time
-filepath = str("audios/" + str(filename_base) + "_audiofiles")
+filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
 filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
 filenamevideo = str("videos/" + str(filename_base))
 
 ################################################################################
 
+def filesetup(filepath):
+    #if all files are setup and libraries are installed then the script will run
+    #Need to check for several things
+    cwd = os.getcwd()
+    print(str(cwd))
+    if not os.path.exists("transcription_temp_files"):
+        os.makedirs("transcription_temp_files")
+    if not os.path.exists("videos"):
+        os.makedirs("videos")
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+
+#    if os.path.exists(home/audio_learning):
+#        return True    
+#    return False
+
+################################################################################
+
 def convert_or_copy(filename_base, filepath):
     if source_file.endswith(".mp4"):
-        print str(len(source_file)) + "    MP4 \n\n\n\n\n\n\n\n\n\n"
-        #command2 = str("ffmpeg -i " + str(source_file) + " " + str(filenamevideo))
-        #subprocess.check_output(command2, shell=True)
         command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
         subprocess.check_output(command1, shell=True)
     else:
@@ -118,8 +135,9 @@ def split_and_transcribe_audio(filename, filepath):
             print("Sphinx could not understand audio")
         except sr.RequestError as e:
             print("Sphinx error; {0}".format(e))
+        cleanup_cmd = "rm " + out_file
+        subprocess.check_output(cleanup_cmd, shell=True)
         iteration = iteration + 1
-        chunks.append(str(out_file))
     last_clip = sound_file[-left_over:]
     out_file_last = filepath + "/" + filename_base + "_chunk" + str(iterations + 1) + ".wav"
     chunks.append(str(out_file_last))
@@ -166,6 +184,8 @@ def split_and_transcribe_audio(filename, filepath):
         print("Sphinx could not understand audio")
     except sr.RequestError as e:
         print("Sphinx error; {0}".format(e))
+    cleanup_cmd = "rm " + out_file_last
+    subprocess.check_output(cleanup_cmd, shell=True)
 
     return (srtfile_path)
 
@@ -198,23 +218,36 @@ def video(name):
 def write_caption(filepath, filename_base):
     srtfile_path_orig = filepath + "/" + filename_base + "_subtitles.txt"
     srtfile_path_capt = filepath + "/" + filename_base + "_subtitles.srt"
-    command3 = str("cp " + str(srtfile_path_orig) + " " + str(srtfile_path_capt))
+    command3 = str("mv " + str(srtfile_path_orig) + " " + str(srtfile_path_capt))
     subprocess.check_output(command3, shell=True)
     command = 'ffmpeg -i ' + source_file + ' -i ' + srtfile_path_capt + ' -c:s mov_text -c:v copy -c:a copy ' + filenamevideo + '_c.mp4'
     if video(source_file):
         subprocess.check_output(command, shell=True)
+    return srtfile_path_capt
         
-
 ################################################################################
+
+def cleanup(filepath, srtfile_path_capt):
+    if os.path.exists(srtfile_path_capt):
+        command4 = str("mv " + srtfile_path_capt + " " + filenamevideo + "_subtitles.srt")
+        subprocess.check_output(command4, shell=True)
+    if os.path.exists(filename):
+        command5 = str("rm " + filename)
+        subprocess.check_output(command5, shell=True)
+    if os.path.exists(filepath):
+        os.rmdir(filepath)
+    if os.path.exists("transcription_temp_files"):
+        command6 = "rmdir transcription_temp_files"
+        subprocess.check_output(command6, shell=True)
+
 #########################Actual Script##########################################
 
 
-if not os.path.exists(filepath):
-    os.makedirs(filepath)
+filesetup(filepath)
 convert_or_copy(filename_base, filepath)
 srtfile_path = split_and_transcribe_audio(filename, filepath)
-write_caption(filepath, filename_base)        
-        
+srtfile_path_capt = write_caption(filepath, filename_base)        
+cleanup(filepath, srtfile_path_capt)        
         
         
         
