@@ -22,9 +22,7 @@ gui.withdraw()
 initialdir = "/home/alex/audio_recognition/videos/"
 submit_time = datetime.now().strftime("%Y%m%d_%H%M")
 
-ftypes = [
-    ('All files', '*')
-]
+ftypes = [('All files', '*')]
 
 source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
 init_filename_list = source_file.split('/')
@@ -195,6 +193,7 @@ def video(name):
             return True
     return False
 
+################################################################################
 
 def write_caption(filepath, filename_base):
     srtfile_path_orig = filepath + "/" + filename_base + "_subtitles.txt"
@@ -204,27 +203,6 @@ def write_caption(filepath, filename_base):
     command = 'ffmpeg -i ' + source_file + ' -i ' + srtfile_path_capt + ' -c:s mov_text -c:v copy -c:a copy ' + filenamevideo + '_c.mp4'
     if video(source_file):
         subprocess.check_output(command, shell=True)
-
-
-
-
-
-
-
-
-    #source_video = VideoFileClip(source_file)
-    #source_video.set_duration(len(source_file))
-    #filename_convert = str("videos/" + str(filename_base) + "_converted.mkv")
-    #source_video.write_videofile(filename_convert)
-    #for caption in captions:
-    #    print caption
-    #    video = VideoFileClip(filenamevideo).subclip(caption[1], caption[2])
-    #    print str(video)
-    #    txt_clip = (TextClip(str(caption[0]), fontsize=18,color='white').set_position('center').set_duration(caption[2]-caption[1]))
-    #    print str(txt_clip) 
-    #    result = CompositeVideoClip([video, txt_clip])
-    #    filename_out = str("videos/" + str(filename_base) + "_C.mp4")
-    #    result.write_videofile(filename_out)
         
 
 ################################################################################
