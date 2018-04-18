@@ -7,10 +7,12 @@ Dependencies for this script include: pocketsphinx, pydub, speech_recognition, T
 
 from pocketsphinx import *
 from pydub import AudioSegment
+from pytube import YouTube
 #from pydub.silence import split_on_silence
 import speech_recognition as sr
 #from SpeechRecognition import *
 import Tkinter # Python GUI package
+from Tkinter import *
 import tkFileDialog # for Dialog Box
 import traceback # for error checking
 import tkMessageBox
@@ -18,39 +20,19 @@ import subprocess
 import os, sys, time
 from datetime import datetime
 
-gui = Tkinter.Tk()
-gui.attributes("-topmost")
-gui.withdraw()
-initialdir = os.getcwd()
-submit_time = datetime.now().strftime("%Y%m%d_%H%M")
-
-ftypes = [('All files', '*')]
-
-source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
-init_filename_list = source_file.split('/')
-init_filename = init_filename_list[-1]
-filename_base_list = init_filename.split('.')
-filename_base = filename_base_list[0] + "_" + submit_time
-filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
-filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
-filenamevideo = str("videos/" + str(filename_base))
 
 ################################################################################
 
-"""
-def download_video():
-    
-https://www.youtube.com/watch?v=MZ3wDnxCWjQ
 
-"""
+def download_video(URL):
+    YouTube(URL).streams.first().download()
+
 
 ################################################################################
 
 def filesetup(filepath):
     #if all files are setup and libraries are installed then the script will run
     #Need to check for several things
-    cwd = os.getcwd()
-    print(str(cwd))
     if not os.path.exists("transcription_temp_files"):
         os.makedirs("transcription_temp_files")
     if not os.path.exists("videos"):
@@ -250,13 +232,44 @@ def cleanup(filepath, srtfile_path_capt):
         subprocess.check_output(command6, shell=True)
 
 #########################Actual Script##########################################
+URL = 'https://www.youtube.com/watch?v=MZ3wDnxCWjQ'
+#download_video(URL)
+gui = Tkinter.Tk()
+gui.attributes("-topmost")
+gui.withdraw()
+initialdir = os.getcwd()
+submit_time = datetime.now().strftime("%Y%m%d_%H%M")
+ftypes = [('All files', '*')]
+cwd = os.getcwd()
+
+#gui.title('Enter a URL for video download')
+#var = StringVar()
+#textbox = Entry(gui, textvariable=var)
+#textbox.focus_set()
+#textbox.pack(pady=10, padx=10)
+#gui.mainloop()
+
+#Label(gui, text='Video URL: ').grid(row=0, column=0, sticky=W, pady=4)
+#e1 = Entry(gui)
+#e1.grid(row=0, column=1)
+#Button(gui, text='Submit', command=show_entry_fields).grid(row=1, column=1, sticky=W, pady=4)
+#mainloop()
 
 
+
+#source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
+init_filename_list = source_file.split('/')
+init_filename = init_filename_list[-1]
+filename_base_list = init_filename.split('.')
+filename_base = filename_base_list[0] + "_" + submit_time
+filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
+filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
+filenamevideo = str("videos/" + str(filename_base))
 filesetup(filepath)
-convert_or_copy(filename_base, filepath)
-srtfile_path = split_and_transcribe_audio(filename, filepath)
-srtfile_path_capt = write_caption(filepath, filename_base)        
-cleanup(filepath, srtfile_path_capt)        
+#convert_or_copy(filename_base, filepath)
+#srtfile_path = split_and_transcribe_audio(filename, filepath)
+#srtfile_path_capt = write_caption(filepath, filename_base)        
+#cleanup(filepath, srtfile_path_capt)        
         
         
         
