@@ -30,30 +30,8 @@ def download_video(URL):
 
 ################################################################################
 
-def filesetup(filepath):
-    #if all files are setup and libraries are installed then the script will run
-    #Need to check for several things
-    if not os.path.exists("transcription_temp_files"):
-        os.makedirs("transcription_temp_files")
-    if not os.path.exists("videos"):
-        os.makedirs("videos")
-    if not os.path.exists(filepath):
-        os.makedirs(filepath)
 
-#    if os.path.exists(home/audio_learning):
-#        return True    
-#    return False
 
-################################################################################
-
-def convert_or_copy(filename_base, filepath):
-    if source_file.endswith(".mp4"):
-        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-        subprocess.check_output(command1, shell=True)
-    else:
-        print "Not an MP4 \n\n\n\n\n"
-        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-        subprocess.check_output(command1, shell=True)
         
 ################################################################################
 
@@ -232,8 +210,7 @@ def cleanup(filepath, srtfile_path_capt):
         subprocess.check_output(command6, shell=True)
 
 #########################Actual Script##########################################
-URL = 'https://www.youtube.com/watch?v=MZ3wDnxCWjQ'
-#download_video(URL)
+#URL = 'https://www.youtube.com/watch?v=MZ3wDnxCWjQ'
 gui = Tkinter.Tk()
 gui.attributes("-topmost")
 gui.withdraw()
@@ -242,40 +219,79 @@ submit_time = datetime.now().strftime("%Y%m%d_%H%M")
 ftypes = [('All files', '*')]
 cwd = os.getcwd()
 
-root = Tk()
-root.title('Enter a URL for video download')
-var = StringVar()
-textbox = Entry(root, textvariable=var)
-textbox.focus_set()
-def callback(var):
-    print var
-b = Button(root, text='Submit', command=callback(var))
-URL = textbox.pack(pady=10, padx=10)
-b.pack(pady=10, padx=10)
 
-URL = root.mainloop()
-
-#Label(gui, text='Video URL: ').grid(row=0, column=0, sticky=W, pady=4)
-#e1 = Entry(gui)
-#e1.grid(row=0, column=1)
+download_choice = raw_input("Do you need to download the video? (Y/N) ")
+if download_choice == "Y":
+    submitURL = raw_input("please enter URL: ")
+    print("\n\n\n Now downloading video from: " + submitURL + " \n\n\n")
+    downloadfile = download_video(submitURL)
 
 
 
+source_file_dirty = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
+print("\n\n\n\n" + source_file_dirty + "\n\n\n\n")
 
-#source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
-#init_filename_list = source_file.split('/')
-#init_filename = init_filename_list[-1]
-#filename_base_list = init_filename.split('.')
-#filename_base = filename_base_list[0] + "_" + submit_time
-#filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
-#filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
-#filenamevideo = str("videos/" + str(filename_base))
-#filesetup(filepath)
-#convert_or_copy(filename_base, filepath)
-#srtfile_path = split_and_transcribe_audio(filename, filepath)
-#srtfile_path_capt = write_caption(filepath, filename_base)        
-#cleanup(filepath, srtfile_path_capt)        
+if " " not in source_file_dirty:
+    source_file = source_file_dirty
+else:
+    source_filecmd = source_file_dirty.replace(" ", "\ ")
+    source_file = source_filecmd.replace("--", "")
+    source_file = source_file.replace("\ ", "_")
+    commandmv1 = ("mv " + source_filecmd + " " + source_file)
+    subprocess.check_output(commandmv1, shell=True) 
+
+print source_file
+
+
+
+init_filename_list = source_file.split('/')
+init_filename = init_filename_list[-1]
+filename_base_list = init_filename.split('.')
+filename_base = filename_base_list[0] + "_" + submit_time
+
+filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
+filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
+filenamevideo = str("videos/" + str(filename_base))
+
+def filesetup(filepath, source_file):
+    #if all files are setup and libraries are installed then the script will run
+    #Need to check for several things
+    if not os.path.exists("transcription_temp_files"):
+        os.makedirs("transcription_temp_files")
+    if not os.path.exists("videos"):
+        os.makedirs("videos")
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+    if download_choice == "Y":
+        commandmv2 = ("mv " + source_file + " videos/" + str(filename_base) + ".mp4")
+        subprocess.check_output(commandmv2, shell=True)
+        source_file = ("videos/" + str(filename_base) + ".mp4")
+    return source_file
+
+
+#    if os.path.exists(home/audio_learning):
+#        return True    
+#    return False
+
+################################################################################
+
+
+source_file = filesetup(filepath, source_file)
+
+def convert_or_copy(filename_base, filepath):
+    if source_file.endswith(".mp4"):
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
+    else:
+        print "Not an MP4 \n\n\n\n\n"
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
         
+        
+convert_or_copy(filename_base, filepath)
+srtfile_path = split_and_transcribe_audio(filename, filepath)
+srtfile_path_capt = write_caption(filepath, filename_base)        
+cleanup(filepath, srtfile_path_capt)        
         
         
         
