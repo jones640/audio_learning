@@ -242,30 +242,35 @@ submit_time = datetime.now().strftime("%Y%m%d_%H%M")
 ftypes = [('All files', '*')]
 cwd = os.getcwd()
 
-#gui.title('Enter a URL for video download')
-#var = StringVar()
-#textbox = Entry(gui, textvariable=var)
-#textbox.focus_set()
-#textbox.pack(pady=10, padx=10)
-#gui.mainloop()
+root = Tk()
+root.title('Enter a URL for video download')
+var = StringVar()
+textbox = Entry(root, textvariable=var)
+textbox.focus_set()
+def callback(var):
+    print var
+b = Button(root, text='Submit', command=callback(var))
+URL = textbox.pack(pady=10, padx=10)
+b.pack(pady=10, padx=10)
+
+URL = root.mainloop()
 
 #Label(gui, text='Video URL: ').grid(row=0, column=0, sticky=W, pady=4)
 #e1 = Entry(gui)
 #e1.grid(row=0, column=1)
-#Button(gui, text='Submit', command=show_entry_fields).grid(row=1, column=1, sticky=W, pady=4)
-#mainloop()
+
 
 
 
 #source_file = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
-init_filename_list = source_file.split('/')
-init_filename = init_filename_list[-1]
-filename_base_list = init_filename.split('.')
-filename_base = filename_base_list[0] + "_" + submit_time
-filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
-filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
-filenamevideo = str("videos/" + str(filename_base))
-filesetup(filepath)
+#init_filename_list = source_file.split('/')
+#init_filename = init_filename_list[-1]
+#filename_base_list = init_filename.split('.')
+#filename_base = filename_base_list[0] + "_" + submit_time
+#filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
+#filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
+#filenamevideo = str("videos/" + str(filename_base))
+#filesetup(filepath)
 #convert_or_copy(filename_base, filepath)
 #srtfile_path = split_and_transcribe_audio(filename, filepath)
 #srtfile_path_capt = write_caption(filepath, filename_base)        
