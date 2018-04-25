@@ -4,7 +4,6 @@
 Dependencies for this script include: pocketsphinx, pydub, speech_recognition, Tkinter, tkFileDialog, traceback, tkMessageBox, subprocess, os, sys, datetime, and time
 """
 
-
 from pocketsphinx import *
 from pydub import AudioSegment
 from pytube import YouTube
@@ -20,18 +19,38 @@ import subprocess
 import os, sys, time
 from datetime import datetime
 
-
 ################################################################################
-
 
 def download_video(URL):
-    YouTube(URL).streams.first().download()
-
+    YouTube(URL).streams.first().download(filename=str('youtube_video_' + submit_time))
 
 ################################################################################
 
+def filesetup(filepath, source_file):
+    #if all files are setup and libraries are installed then the script will run
+    #Need to check for several things
+    if not os.path.exists("transcription_temp_files"):
+        os.makedirs("transcription_temp_files")
+    if not os.path.exists("videos"):
+        os.makedirs("videos")
+    if not os.path.exists(filepath):
+        os.makedirs(filepath)
+    if download_choice == "Y":
+        commandmv2 = ("mv " + source_file + " videos/" + str(filename_base) + ".mp4")
+        subprocess.check_output(commandmv2, shell=True)
+        source_file = ("videos/" + str(filename_base) + ".mp4")
+    return source_file
 
+################################################################################
 
+def convert_or_copy(filename_base, filepath):
+    if source_file.endswith(".mp4"):
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
+    else:
+        print "Not an MP4 \n\n\n\n\n"
+        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
+        subprocess.check_output(command1, shell=True)
         
 ################################################################################
 
@@ -155,9 +174,7 @@ def split_and_transcribe_audio(filename, filepath):
         print("Sphinx error; {0}".format(e))
     cleanup_cmd = "rm " + out_file_last
     subprocess.check_output(cleanup_cmd, shell=True)
-
     return (srtfile_path)
-
         
 ################################################################################
 
@@ -210,7 +227,7 @@ def cleanup(filepath, srtfile_path_capt):
         subprocess.check_output(command6, shell=True)
 
 #########################Actual Script##########################################
-#URL = 'https://www.youtube.com/watch?v=MZ3wDnxCWjQ'
+
 gui = Tkinter.Tk()
 gui.attributes("-topmost")
 gui.withdraw()
@@ -219,6 +236,7 @@ submit_time = datetime.now().strftime("%Y%m%d_%H%M")
 ftypes = [('All files', '*')]
 cwd = os.getcwd()
 
+#VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
 download_choice = raw_input("Do you need to download the video? (Y/N) ")
 if download_choice == "Y":
@@ -232,10 +250,10 @@ source_file_dirty = tkFileDialog.askopenfilename(parent=gui, initialdir=initiald
 print("\n\n\n\n" + source_file_dirty + "\n\n\n\n")
 
 if " " not in source_file_dirty:
-    source_file = source_file_dirty
+    source_file = source_file_dirty.replace("\342\200\223", "")
 else:
     source_filecmd = source_file_dirty.replace(" ", "\ ")
-    source_file = source_filecmd.replace("--", "")
+    source_file = source_filecmd.replace("\342\200\223", "")
     source_file = source_file.replace("\ ", "_")
     commandmv1 = ("mv " + source_filecmd + " " + source_file)
     subprocess.check_output(commandmv1, shell=True) 
@@ -253,21 +271,6 @@ filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
 filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
 filenamevideo = str("videos/" + str(filename_base))
 
-def filesetup(filepath, source_file):
-    #if all files are setup and libraries are installed then the script will run
-    #Need to check for several things
-    if not os.path.exists("transcription_temp_files"):
-        os.makedirs("transcription_temp_files")
-    if not os.path.exists("videos"):
-        os.makedirs("videos")
-    if not os.path.exists(filepath):
-        os.makedirs(filepath)
-    if download_choice == "Y":
-        commandmv2 = ("mv " + source_file + " videos/" + str(filename_base) + ".mp4")
-        subprocess.check_output(commandmv2, shell=True)
-        source_file = ("videos/" + str(filename_base) + ".mp4")
-    return source_file
-
 
 #    if os.path.exists(home/audio_learning):
 #        return True    
@@ -277,17 +280,6 @@ def filesetup(filepath, source_file):
 
 
 source_file = filesetup(filepath, source_file)
-
-def convert_or_copy(filename_base, filepath):
-    if source_file.endswith(".mp4"):
-        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-        subprocess.check_output(command1, shell=True)
-    else:
-        print "Not an MP4 \n\n\n\n\n"
-        command1 = str("ffmpeg -i " + str(source_file) + " -vn " + str(filename))
-        subprocess.check_output(command1, shell=True)
-        
-        
 convert_or_copy(filename_base, filepath)
 srtfile_path = split_and_transcribe_audio(filename, filepath)
 srtfile_path_capt = write_caption(filepath, filename_base)        
