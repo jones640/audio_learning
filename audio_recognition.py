@@ -7,7 +7,7 @@ Dependencies for this script include: pocketsphinx, pydub, speech_recognition, T
 from pocketsphinx import *
 from pydub import AudioSegment
 from pytube import YouTube
-#from pydub.silence import split_on_silence
+from pydub.silence import split_on_silence
 import speech_recognition as sr
 #from SpeechRecognition import *
 import Tkinter # Python GUI package
@@ -127,8 +127,10 @@ def split_and_transcribe_audio(filename, filepath):
             print(str(iteration) + "\n" + str(shour) + ":" + str(sminute) + ":" + str(ssecond) + "," + str(smilli) + " --> " + str(fhour) + ":" + str(fminute) + ":" + str(fsecond) + "," + str(fmilli) + "\n" + str(decoder) + "\n")
         except sr.UnknownValueError:
             print("Sphinx could not understand audio")
+            continue
         except sr.RequestError as e:
             print("Sphinx error; {0}".format(e))
+            continue
         cleanup_cmd = "rm " + out_file
         subprocess.check_output(cleanup_cmd, shell=True)
         iteration = iteration + 1
