@@ -22,7 +22,9 @@ from datetime import datetime
 ################################################################################
 
 def download_video(URL):
-    YouTube(URL).streams.first().download(filename=str('youtube_video_' + submit_time))
+    download_filename = str('youtube_video_' + submit_time)
+    YouTube(URL).streams.first().download(filename=str(download_filename))
+    return download_filename
 
 ################################################################################
 
@@ -38,6 +40,10 @@ def filesetup(filepath, source_file):
     if download_choice == "Y":
         commandmv2 = ("mv " + source_file + " videos/" + str(filename_base) + ".mp4")
         subprocess.check_output(commandmv2, shell=True)
+        source_file = ("videos/" + str(filename_base) + ".mp4")
+    elif download_choice == "N":
+        commandcp1 = ("cp " + source_file + " videos/" + str(filename_base) + ".mp4")
+        subprocess.check_output(commandcp1, shell=True)
         source_file = ("videos/" + str(filename_base) + ".mp4")
     return source_file
 
@@ -235,37 +241,33 @@ initialdir = os.getcwd()
 submit_time = datetime.now().strftime("%Y%m%d_%H%M")
 ftypes = [('All files', '*')]
 cwd = os.getcwd()
-
+print("\n\n\n\n\n" + cwd + "\n\n\n\n\n") 
 #VVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV
 
 download_choice = raw_input("Do you need to download the video? (Y/N) ")
 if download_choice == "Y":
     submitURL = raw_input("please enter URL: ")
     print("\n\n\n Now downloading video from: " + submitURL + " \n\n\n")
-    downloadfile = download_video(submitURL)
+    download_filename = download_video(submitURL)
+    filename_base = download_filename
+    source_file = str(cwd + "/" + filename_base + ".mp4")
 
-
-
-source_file_dirty = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
-print("\n\n\n\n" + source_file_dirty + "\n\n\n\n")
-
-if " " not in source_file_dirty:
-    source_file = source_file_dirty.replace("\342\200\223", "")
-else:
-    source_filecmd = source_file_dirty.replace(" ", "\ ")
-    source_file = source_filecmd.replace("\342\200\223", "")
-    source_file = source_file.replace("\ ", "_")
-    commandmv1 = ("mv " + source_filecmd + " " + source_file)
-    subprocess.check_output(commandmv1, shell=True) 
-
-print source_file
-
-
-
-init_filename_list = source_file.split('/')
-init_filename = init_filename_list[-1]
-filename_base_list = init_filename.split('.')
-filename_base = filename_base_list[0] + "_" + submit_time
+elif download_choice == "N":
+    source_file_dirty = tkFileDialog.askopenfilename(parent=gui, initialdir=initialdir, title= 'Select a file to be analyzed', filetypes=ftypes)
+    print("\n\n\n\n" + source_file_dirty + "\n\n\n\n")
+    if " " in source_file_dirty:
+        source_filecmd = source_file_dirty.replace(" ", "\ ")
+        source_file = source_filecmd.replace("\342\200\223", "")
+        source_file = source_file.replace("\ ", "_")
+        commandmv1 = ("mv " + source_filecmd + " " + source_file)
+        subprocess.check_output(commandmv1, shell=True)
+    else:
+        source_file = source_file_dirty
+    print source_file
+    init_filename_list = source_file.split('/')
+    init_filename = init_filename_list[-1]
+    filename_base_list = init_filename.split('.')
+    filename_base = filename_base_list[0] + "_" + submit_time
 
 filepath = str("transcription_temp_files/" + str(filename_base) + "_audiofiles")
 filename = str(str(filepath) + "/" + str(filename_base) + ".wav")
